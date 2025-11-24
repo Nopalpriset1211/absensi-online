@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Absensi Online</title>
 
-<!-- Modern UI -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.min.css">
 
 <style>
@@ -23,34 +22,31 @@
     }
     .hidden { display: none; }
     .center { text-align: center; }
+    .admin-link {
+        text-align: center;
+        margin-top: 20px;
+    }
 </style>
 </head>
 
 <body>
 
 <!-- ================================
-      MENU UTAMA
+      HALAMAN UTAMA (FORM ABSENSI)
 ================================ -->
-<div id="menu" class="card">
-    <h2 class="center">Sistem Absensi Online</h2>
-    <button onclick="showAbsensi()" class="button">Isi Absensi</button>
-    <button onclick="showAdminLogin()" class="button button-outline">Menu Admin</button>
-</div>
-
-<!-- ================================
-      HALAMAN ABSENSI
-================================ -->
-<div id="absenPage" class="card hidden">
-    <h3>Form Absensi</h3>
+<div id="absenPage" class="card">
+    <h2 class="center">Sistem Absensi</h2>
 
     <label>ID / Nama Terdaftar:</label>
-    <input type="text" id="namaInput" placeholder="Contoh: 1001">
+    <input type="text" id="namaInput" placeholder="Contoh: 1001 / naufal">
 
     <button class="button" onclick="kirimAbsensi()">Kirim Absensi</button>
 
-    <button class="button button-outline" onclick="backMenu()">⬅ Kembali</button>
-
     <p id="statusAbsen" style="margin-top:10px; font-weight:bold;"></p>
+
+    <div class="admin-link">
+        <button class="button button-outline" onclick="showAdminLogin()">Login Admin</button>
+    </div>
 </div>
 
 <!-- ================================
@@ -62,7 +58,7 @@
     <input type="password" id="adminPass">
 
     <button onclick="loginAdmin()" class="button">Masuk</button>
-    <button class="button button-outline" onclick="backMenu()">⬅ Kembali</button>
+    <button class="button button-outline" onclick="backAbsensi()">⬅ Kembali</button>
 
     <p id="loginStatus" style="color:red;"></p>
 </div>
@@ -84,9 +80,11 @@
         <tbody></tbody>
     </table>
 
-    <button onclick="hapusSemuaData()" class="button button-outline" style="margin-top:15px;">Hapus Semua Data</button>
+    <button onclick="hapusSemuaData()" class="button button-outline" style="margin-top:15px;">
+        Hapus Semua Data
+    </button>
 
-    <button class="button" onclick="backMenu()">⬅ Kembali</button>
+    <button class="button" onclick="backAbsensi()">⬅ Kembali</button>
 </div>
 
 <script>
@@ -94,27 +92,23 @@
 // KONFIGURASI
 // ===============================
 
-// Daftar ID / nama yang boleh absen
+// Daftar ID / nama yang diperbolehkan absen
 const daftarValid = ["1001", "1002", "1003", "naufal", "rehan"];
 
-// Batas maksimal absensi (jika lewat = Tanpa Keterangan)
+// Batas jam absensi (lewat = Tanpa Keterangan)
 const batasJam = 12; // jam 12:00 siang
 
 
 // ===============================
-// MENU NAV
+// NAVIGASI
 // ===============================
-function backMenu() {
-    document.querySelectorAll(".card").forEach(el => el.classList.add("hidden"));
-    document.getElementById("menu").classList.remove("hidden");
-}
-function showAbsensi() {
-    document.getElementById("menu").classList.add("hidden");
-    document.getElementById("absenPage").classList.remove("hidden");
-}
 function showAdminLogin() {
-    document.getElementById("menu").classList.add("hidden");
+    document.getElementById("absenPage").classList.add("hidden");
     document.getElementById("adminLogin").classList.remove("hidden");
+}
+function backAbsensi() {
+    document.querySelectorAll(".card").forEach(el => el.classList.add("hidden"));
+    document.getElementById("absenPage").classList.remove("hidden");
 }
 
 
@@ -156,6 +150,7 @@ function kirimAbsensi() {
 // ===============================
 function loginAdmin() {
     const pass = document.getElementById("adminPass").value;
+
     if (pass === "admin123") {
         document.getElementById("adminLogin").classList.add("hidden");
         document.getElementById("adminPanel").classList.remove("hidden");
@@ -187,7 +182,7 @@ function loadRekap() {
 }
 
 function hapusSemuaData() {
-    if (confirm("Apakah Anda yakin ingin menghapus semua data?")) {
+    if (confirm("Yakin hapus semua data?")) {
         localStorage.removeItem("absensi");
         loadRekap();
     }
