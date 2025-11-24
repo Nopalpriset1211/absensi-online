@@ -105,7 +105,7 @@ function toggleFileInput(){
     document.getElementById("fileWrapper").style.display = (status==="Izin") ? "block" : "none";
 }
 
-// ======= ABSENSI =======
+// ======= ABSENSI MANUAL =======
 function submitAbsensi(){
     const id = document.getElementById("userId").value.trim();
     const pesan = document.getElementById("pesan");
@@ -184,6 +184,41 @@ function loadRekap(){
     });
 }
 function hapusData(key){db.ref('absensi/'+key).remove().then(()=>loadRekap());}
+
+// ======= AUTO TANPA KETERANGAN DI FRONTEND (TIAP 1 MENIT) =======
+function autoAbsenTanpaKeterangan(){
+    const now = new Date();
+    const hari = now.getDay();
+    const jam = now.getHours();
+
+    // Hanya Selasa & Sabtu pukul 18:00
+    if((hari===2 || hari===6) && jam === 18){
+        db.ref('absensi').once('value', snapshot=>{
+            const sudahAbsen = {};
+            snapshot.forEach(snap=>{
+                const item = snap.val();
+                const date = new Date(item.waktu);
+                if(date.getDate()===now.getDate() &&
+                   date.getMonth()===now.getMonth() &&
+                   date.getFullYear()===now.getFullYear()){
+                    sudahAbsen[item.id] = true;
+                }
+            });
+            for(const id in registeredUsers){
+                if(!sudahAbsen[id]){
+                    db.ref('absensi').push({
+                        id: id,
+                        nama: registeredUsers[id],
+                        waktu: now.toLocaleString(),
+                        status: "Tanpa Keterangan"
+                    });
+                    console.log("Auto absen Tanpa Keterangan:", id);
+                }
+            }
+        });
+    }
+}
+setInterval(autoAbsenTanpaKeterangan, 60*1000); // cek tiap 1 menit
 </script>
 
 </body>
