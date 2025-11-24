@@ -58,7 +58,7 @@ th, td{padding:8px;border-bottom:1px solid #ddd;text-align:left;}
 const firebaseConfig = {
   apiKey: "AIzaSyCCheqFeLe-BS5ZZiyXLfmRVnyoDbmbMiM",
   authDomain: "absen-74c40.firebaseapp.com",
-  databaseURL: "https://absen-74c40-default-rtdb.firebaseio.com", // <== wajib
+  databaseURL: "https://absen-74c40-default-rtdb.firebaseio.com",
   projectId: "absen-74c40",
   storageBucket: "absen-74c40.firebasestorage.app",
   messagingSenderId: "962064220204",
@@ -81,16 +81,25 @@ const batasJam = 9;
 function submitAbsensi(){
     const id = document.getElementById("userId").value.trim();
     const pesan = document.getElementById("pesan");
-    if(!id){pesan.innerText="ID tidak boleh kosong!"; return;}
-    if(!registeredUsers[id]){pesan.innerText="ID tidak terdaftar!"; return;}
+
+    if(!id){pesan.style.color="red"; pesan.innerText="ID tidak boleh kosong!"; return;}
+    if(!registeredUsers[id]){pesan.style.color="red"; pesan.innerText="ID tidak terdaftar!"; return;}
 
     const now = new Date();
     let status = now.getHours() <= batasJam ? "Hadir" : "Tanpa Keterangan";
     const data = {id:id, nama:registeredUsers[id], waktu:now.toLocaleString(), status:status};
 
     db.ref('absensi').push(data, (err)=>{
-        if(err){pesan.style.color="red"; pesan.innerText="Gagal absen";}
-        else{pesan.style.color="green"; pesan.innerText="Absensi berhasil!"; document.getElementById("userId").value="";}
+        if(err){
+            console.log("Gagal kirim:", err);
+            pesan.style.color="red";
+            pesan.innerText="Gagal absen";
+        } else {
+            console.log("Berhasil kirim:", data);
+            pesan.style.color="green";
+            pesan.innerText="Absensi berhasil!";
+            document.getElementById("userId").value="";
+        }
     });
 }
 
@@ -128,4 +137,3 @@ function hapusData(key){db.ref('absensi/'+key).remove().then(()=>loadRekap());}
 
 </body>
 </html>
-
