@@ -6,46 +6,10 @@
 <title>Absensi Rutinan Paskibra</title>
 <style>
 body { font-family: Arial; background: #f4f6fa; margin:0; padding:0; }
-header{
-    background:#2d6cdf;
-    color:white;
-    padding:15px;
-    text-align:center;
-    font-size:22px;
-    font-weight:bold;
-}
-header img{
-    height:40px;
-    vertical-align:middle;
-    margin-right:10px;
-}
-.container{
-    max-width:480px;
-    margin:30px auto;
-    background:white;
-    padding:25px;
-    border-radius:12px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.1);
-}
-.container img.logo-center{
-    display:block;
-    margin:0 auto 15px;
-    height:60px;
-}
-input, button, select{
-    width:100%;
-    padding:12px;
-    margin:8px 0;
-    border-radius:6px;
-    border:1px solid #ccc;
-    font-size:16px;
-}
-button{
-    background:#2d6cdf;
-    color:white;
-    cursor:pointer;
-    font-weight:bold;
-}
+header{background:#2d6cdf;color:white;padding:15px;text-align:center;font-size:22px;font-weight:bold;}
+.container{max-width:480px;margin:30px auto;background:white;padding:25px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.1);}
+input, button, select{width:100%;padding:12px;margin:8px 0;border-radius:6px;border:1px solid #ccc;font-size:16px;}
+button{background:#2d6cdf;color:white;cursor:pointer;font-weight:bold;}
 button:hover{background:#1f54b8;}
 .link-btn{background:#555;}
 .back-btn{background:#777;margin-top:5px;}
@@ -62,35 +26,31 @@ a:hover{text-decoration:underline;}
 </head>
 <body>
 
-<header>
-  <img src="img/logo.png" alt="Logo Paskibra">
-  Absensi Online
-</header>
+<header>Absensi Online</header>
 
 <!-- Halaman Absen -->
 <div class="container" id="absenPage">
-  <img src="img/logo.png" alt="Logo Paskibra" class="logo-center">
-  <h3>Form Absensi</h3>
-  <p style="color:#555;font-size:14px;">
-    <b>Informasi:</b> Absensi hanya bisa dilakukan <b>hari Selasa & Sabtu</b>, pukul <b>12:00 WIB sampai 18:00 WIB</b>.
-  </p>
-  <label>ID Absen</label>
-  <input type="text" id="userId" placeholder="Masukkan ID Anda...">
+<h3>Form Absensi</h3>
+<p style="color:#555;font-size:14px;">
+<b>Informasi:</b> Absensi hanya bisa dilakukan <b>hari Selasa & Sabtu</b>, pukul <b>12:00 WIB sampai 18:00 WIB</b>.
+</p>
+<label>ID Absen</label>
+<input type="text" id="userId" placeholder="Masukkan ID Anda...">
 
-  <label>Keterangan</label>
-  <select id="statusAbsen" onchange="toggleFileInput()">
-    <option value="Hadir">Hadir</option>
-    <option value="Izin">Izin</option>
-  </select>
+<label>Keterangan</label>
+<select id="statusAbsen" onchange="toggleFileInput()">
+  <option value="Hadir">Hadir</option>
+  <option value="Izin">Izin</option>
+</select>
 
-  <div id="fileWrapper" style="display:none;">
-    <label>Upload Foto Izin</label>
-    <input type="file" id="fotoIzin" accept="image/*">
-  </div>
+<div id="fileWrapper" style="display:none;">
+  <label>Upload Foto Izin</label>
+  <input type="file" id="fotoIzin" accept="image/*">
+</div>
 
-  <button onclick="submitAbsensi()">Apply Absen</button>
-  <button class="link-btn" onclick="openAdmin()">Login Admin</button>
-  <p style="color:red;font-weight:bold;" id="pesan"></p>
+<button onclick="submitAbsensi()">Apply Absen</button>
+<button class="link-btn" onclick="openAdmin()">Login Admin</button>
+<p style="color:red;font-weight:bold;" id="pesan"></p>
 </div>
 
 <!-- Halaman Login Admin -->
@@ -231,6 +191,7 @@ function autoAbsenTanpaKeterangan(){
     const hari = now.getDay();
     const jam = now.getHours();
 
+    // Hanya Selasa & Sabtu pukul 18:00
     if((hari===2 || hari===6) && jam === 18){
         db.ref('absensi').once('value', snapshot=>{
             const sudahAbsen = {};
@@ -257,7 +218,7 @@ function autoAbsenTanpaKeterangan(){
         });
     }
 }
-setInterval(autoAbsenTanpaKeterangan, 60*1000);
+setInterval(autoAbsenTanpaKeterangan, 60*1000); // cek tiap 1 menit
 </script>
 
 </body>
