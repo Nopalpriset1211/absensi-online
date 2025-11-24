@@ -58,6 +58,7 @@ th, td{padding:8px;border-bottom:1px solid #ddd;text-align:left;}
 const firebaseConfig = {
   apiKey: "AIzaSyCCheqFeLe-BS5ZZiyXLfmRVnyoDbmbMiM",
   authDomain: "absen-74c40.firebaseapp.com",
+  databaseURL: "https://absen-74c40-default-rtdb.firebaseio.com", // <== wajib
   projectId: "absen-74c40",
   storageBucket: "absen-74c40.firebasestorage.app",
   messagingSenderId: "962064220204",
@@ -127,3 +128,4 @@ function hapusData(key){db.ref('absensi/'+key).remove().then(()=>loadRekap());}
 
 </body>
 </html>
+
