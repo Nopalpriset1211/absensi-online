@@ -18,6 +18,7 @@ th, td{padding:8px;border-bottom:1px solid #ddd;text-align:left;}
 a{color:#2d6cdf;text-decoration:none;}
 a:hover{text-decoration:underline;}
 </style>
+
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
@@ -81,10 +82,9 @@ const firebaseConfig = {
   authDomain: "absen-74c40.firebaseapp.com",
   databaseURL: "https://absen-74c40-default-rtdb.firebaseio.com",
   projectId: "absen-74c40",
-  storageBucket: "absen-74c40.firebasestorage.app",
+  storageBucket: "absen-74c40.appspot.com",
   messagingSenderId: "962064220204",
-  appId: "1:962064220204:web:8111b69ce31a5994f51189",
-  measurementId: "G-5YZD0L6FXQ"
+  appId: "1:962064220204:web:8111b69ce31a5994f51189"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
@@ -184,68 +184,7 @@ function loadRekap(){
     });
 }
 function hapusData(key){db.ref('absensi/'+key).remove().then(()=>loadRekap());}
-
-// ======= AUTO TANPA KETERANGAN =======
-const functions = require('firebase-functions');
-const admin = require('firebase-admin');
-admin.initializeApp();
-const db = admin.database();
-
-// Auto-absen setiap Selasa & Sabtu pukul 18:00 WIB
-exports.autoTanpaKeterangan = functions.pubsub
-  .schedule('0 18 * * 2,6') // 18:00 Selasa & Sabtu
-  .timeZone('Asia/Jakarta')
-  .onRun(async (context) => {
-    console.log("Menjalankan auto absen Tanpa Keterangan");
-
-    // Daftar user terdaftar
-    const registeredUsers = {
-      "101":"Andi Saputra",
-      "102":"Budi Pratama",
-      "103":"Citra Dewi",
-      "104":"Dina Permana"
-    };
-
-    // Ambil data absensi hari ini
-    const snapshot = await db.ref('absensi').once('value');
-    const sudahAbsen = {};
-    snapshot.forEach(snap => {
-      const item = snap.val();
-      const date = new Date(item.waktu);
-      const today = new Date();
-      if(date.getDate()===today.getDate() &&
-         date.getMonth()===today.getMonth() &&
-         date.getFullYear()===today.getFullYear()){
-        sudahAbsen[item.id] = true;
-      }
-    });
-
-    // Tambahkan yang belum absen
-    for(const id in registeredUsers){
-      if(!sudahAbsen[id]){
-        const data = {
-          id: id,
-          nama: registeredUsers[id],
-          waktu: new Date().toLocaleString('id-ID'),
-          status: "Tanpa Keterangan"
-        };
-        await db.ref('absensi').push(data);
-        console.log("Menambahkan:", id);
-      }
-    }
-
-    return null;
-  });
-
-                }
-            }
-        });
-    }
-}
-setInterval(autoAbsenTanpaKeterangan, 5*60*1000); // Cek tiap 5 menit
 </script>
 
 </body>
 </html>
-
-
