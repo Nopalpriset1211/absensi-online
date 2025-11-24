@@ -1,8 +1,198 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-<meta http-equiv="refresh" content="0; URL=absensi.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Absensi Online</title>
+
+<!-- Modern UI -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.min.css">
+
+<style>
+    body {
+        margin: 40px;
+        background: #f2f6ff;
+    }
+    .card {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        max-width: 600px;
+        margin: auto;
+    }
+    .hidden { display: none; }
+    .center { text-align: center; }
+</style>
 </head>
+
 <body>
+
+<!-- ================================
+      MENU UTAMA
+================================ -->
+<div id="menu" class="card">
+    <h2 class="center">Sistem Absensi Online</h2>
+    <button onclick="showAbsensi()" class="button">Isi Absensi</button>
+    <button onclick="showAdminLogin()" class="button button-outline">Menu Admin</button>
+</div>
+
+<!-- ================================
+      HALAMAN ABSENSI
+================================ -->
+<div id="absenPage" class="card hidden">
+    <h3>Form Absensi</h3>
+
+    <label>ID / Nama Terdaftar:</label>
+    <input type="text" id="namaInput" placeholder="Contoh: 1001">
+
+    <button class="button" onclick="kirimAbsensi()">Kirim Absensi</button>
+
+    <button class="button button-outline" onclick="backMenu()">⬅ Kembali</button>
+
+    <p id="statusAbsen" style="margin-top:10px; font-weight:bold;"></p>
+</div>
+
+<!-- ================================
+      LOGIN ADMIN
+================================ -->
+<div id="adminLogin" class="card hidden">
+    <h3>Login Admin</h3>
+    <label>Password Admin:</label>
+    <input type="password" id="adminPass">
+
+    <button onclick="loginAdmin()" class="button">Masuk</button>
+    <button class="button button-outline" onclick="backMenu()">⬅ Kembali</button>
+
+    <p id="loginStatus" style="color:red;"></p>
+</div>
+
+<!-- ================================
+      ADMIN PANEL
+================================ -->
+<div id="adminPanel" class="card hidden">
+    <h3>Rekap Absensi</h3>
+
+    <table id="rekapTable" border="1" width="100%">
+        <thead>
+            <tr>
+                <th>ID/Nama</th>
+                <th>Waktu</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <button onclick="hapusSemuaData()" class="button button-outline" style="margin-top:15px;">Hapus Semua Data</button>
+
+    <button class="button" onclick="backMenu()">⬅ Kembali</button>
+</div>
+
+<script>
+// ===============================
+// KONFIGURASI
+// ===============================
+
+// Daftar ID / nama yang boleh absen
+const daftarValid = ["1001", "1002", "1003", "naufal", "rehan"];
+
+// Batas maksimal absensi (jika lewat = Tanpa Keterangan)
+const batasJam = 12; // jam 12:00 siang
+
+
+// ===============================
+// MENU NAV
+// ===============================
+function backMenu() {
+    document.querySelectorAll(".card").forEach(el => el.classList.add("hidden"));
+    document.getElementById("menu").classList.remove("hidden");
+}
+function showAbsensi() {
+    document.getElementById("menu").classList.add("hidden");
+    document.getElementById("absenPage").classList.remove("hidden");
+}
+function showAdminLogin() {
+    document.getElementById("menu").classList.add("hidden");
+    document.getElementById("adminLogin").classList.remove("hidden");
+}
+
+
+// ===============================
+// ABSENSI
+// ===============================
+function kirimAbsensi() {
+    const nama = document.getElementById("namaInput").value.trim().toLowerCase();
+    const statusAbsen = document.getElementById("statusAbsen");
+
+    if (!daftarValid.includes(nama)) {
+        statusAbsen.style.color = "red";
+        statusAbsen.innerText = "ID/Nama tidak terdaftar!";
+        return;
+    }
+
+    const now = new Date();
+    const jam = now.getHours();
+
+    const status = jam <= batasJam ? "Hadir" : "Tanpa Keterangan";
+
+    let data = JSON.parse(localStorage.getItem("absensi")) || [];
+    data.push({
+        nama: nama,
+        waktu: now.toLocaleString(),
+        status: status
+    });
+
+    localStorage.setItem("absensi", JSON.stringify(data));
+
+    statusAbsen.style.color = "green";
+    statusAbsen.innerText = "Absensi Berhasil!";
+    document.getElementById("namaInput").value = "";
+}
+
+
+// ===============================
+// ADMIN LOGIN
+// ===============================
+function loginAdmin() {
+    const pass = document.getElementById("adminPass").value;
+    if (pass === "admin123") {
+        document.getElementById("adminLogin").classList.add("hidden");
+        document.getElementById("adminPanel").classList.remove("hidden");
+        loadRekap();
+    } else {
+        document.getElementById("loginStatus").innerText = "Password salah!";
+    }
+}
+
+
+// ===============================
+// REKAP ADMIN
+// ===============================
+function loadRekap() {
+    const table = document.querySelector("#rekapTable tbody");
+    table.innerHTML = "";
+
+    const data = JSON.parse(localStorage.getItem("absensi")) || [];
+
+    data.forEach(row => {
+        let tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${row.nama}</td>
+            <td>${row.waktu}</td>
+            <td>${row.status}</td>
+        `;
+        table.appendChild(tr);
+    });
+}
+
+function hapusSemuaData() {
+    if (confirm("Apakah Anda yakin ingin menghapus semua data?")) {
+        localStorage.removeItem("absensi");
+        loadRekap();
+    }
+}
+</script>
+
 </body>
 </html>
