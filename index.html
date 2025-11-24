@@ -5,187 +5,214 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Absensi Online</title>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.min.css">
-
+<!-- Modern UI -->
 <style>
     body {
-        margin: 40px;
-        background: #f2f6ff;
+        font-family: Arial, sans-serif;
+        margin: 0; padding: 0;
+        background: #f4f6fa;
     }
-    .card {
+    header {
+        background: #2d6cdf;
+        color: white;
+        padding: 15px;
+        text-align: center;
+        font-size: 22px;
+        font-weight: bold;
+    }
+    .container {
+        max-width: 420px;
+        margin: 30px auto;
         background: white;
         padding: 25px;
         border-radius: 12px;
         box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        max-width: 600px;
-        margin: auto;
     }
-    .hidden { display: none; }
-    .center { text-align: center; }
-    .admin-link {
-        text-align: center;
-        margin-top: 20px;
+    input, button, select {
+        width: 100%;
+        padding: 12px;
+        margin: 8px 0;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        font-size: 16px;
+    }
+    button {
+        background: #2d6cdf;
+        color: white;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    button:hover {
+        background: #1f54b8;
+    }
+    .link-btn {
+        background: #555;
+        margin-top: 10px;
+    }
+    #rekapTable td, #rekapTable th {
+        padding: 8px;
+        border-bottom: 1px solid #ddd;
+    }
+    .back-btn {
+        margin-top: 10px;
+        background: #777;
     }
 </style>
 </head>
-
 <body>
 
-<!-- ================================
-      HALAMAN UTAMA (FORM ABSENSI)
-================================ -->
-<div id="absenPage" class="card">
-    <h2 class="center">Sistem Absensi</h2>
+<header>Absensi Online</header>
 
-    <label>ID / Nama Terdaftar:</label>
-    <input type="text" id="namaInput" placeholder="Contoh: 1001 / naufal">
+<!-- ====================== HALAMAN ABSEN ========================== -->
+<div class="container" id="absenPage">
 
-    <button class="button" onclick="kirimAbsensi()">Kirim Absensi</button>
+    <h3>Form Absensi</h3>
 
-    <p id="statusAbsen" style="margin-top:10px; font-weight:bold;"></p>
+    <label>ID Absen</label>
+    <input type="text" id="userId" placeholder="Masukkan ID Anda...">
 
-    <div class="admin-link">
-        <button class="button button-outline" onclick="showAdminLogin()">Login Admin</button>
-    </div>
+    <button onclick="submitAbsensi()">Apply Absen</button>
+
+    <button class="link-btn" onclick="openAdmin()">Login Admin</button>
+
+    <p style="color:red; font-weight:bold;" id="pesan"></p>
 </div>
 
-<!-- ================================
-      LOGIN ADMIN
-================================ -->
-<div id="adminLogin" class="card hidden">
+<!-- ====================== LOGIN ADMIN ========================== -->
+<div class="container" id="adminLogin" style="display:none;">
     <h3>Login Admin</h3>
-    <label>Password Admin:</label>
-    <input type="password" id="adminPass">
 
-    <button onclick="loginAdmin()" class="button">Masuk</button>
-    <button class="button button-outline" onclick="backAbsensi()">⬅ Kembali</button>
+    <label>Password</label>
+    <input type="password" id="adminPass" placeholder="Masukkan password admin">
 
-    <p id="loginStatus" style="color:red;"></p>
+    <button onclick="loginAdmin()">Login</button>
+    <button class="back-btn" onclick="backToHome()">Kembali</button>
+
+    <p id="adminLoginMsg" style="color:red;"></p>
 </div>
 
-<!-- ================================
-      ADMIN PANEL
-================================ -->
-<div id="adminPanel" class="card hidden">
+<!-- ====================== MENU ADMIN ========================== -->
+<div class="container" id="adminPanel" style="display:none;">
     <h3>Rekap Absensi</h3>
 
-    <table id="rekapTable" border="1" width="100%">
+    <table width="100%" id="rekapTable">
         <thead>
             <tr>
-                <th>ID/Nama</th>
+                <th>ID</th>
+                <th>Nama</th>
                 <th>Waktu</th>
-                <th>Status</th>
+                <th>Aksi</th>
             </tr>
         </thead>
-        <tbody></tbody>
+        <tbody id="rekapBody"></tbody>
     </table>
 
-    <button onclick="hapusSemuaData()" class="button button-outline" style="margin-top:15px;">
-        Hapus Semua Data
-    </button>
-
-    <button class="button" onclick="backAbsensi()">⬅ Kembali</button>
+    <button class="back-btn" onclick="logoutAdmin()">Keluar Admin</button>
 </div>
 
 <script>
-// ===============================
-// KONFIGURASI
-// ===============================
+// ====================== DATA USER TERDAFTAR ======================
+const registeredUsers = {
+    "101": "Andi Saputra",
+    "102": "Budi Pratama",
+    "103": "Citra Dewi",
+    "104": "Dina Permana"
+    // Tambah sendiri: "ID": "Nama"
+};
 
-// Daftar ID / nama yang diperbolehkan absen
-const daftarValid = ["1001", "1002", "1003", "naufal", "rehan"];
+// ====================== BATAS WAKTU ABSEN ======================
+const batasJam = 9; // maksimum jam 09:00
 
-// Batas jam absensi (lewat = Tanpa Keterangan)
-const batasJam = 12; // jam 12:00 siang
+// ====================== ABSENSI ======================
+function submitAbsensi() {
+    const id = document.getElementById("userId").value.trim();
+    const pesan = document.getElementById("pesan");
 
+    if (!id) {
+        pesan.innerText = "ID tidak boleh kosong!";
+        return;
+    }
 
-// ===============================
-// NAVIGASI
-// ===============================
-function showAdminLogin() {
-    document.getElementById("absenPage").classList.add("hidden");
-    document.getElementById("adminLogin").classList.remove("hidden");
-}
-function backAbsensi() {
-    document.querySelectorAll(".card").forEach(el => el.classList.add("hidden"));
-    document.getElementById("absenPage").classList.remove("hidden");
-}
-
-
-// ===============================
-// ABSENSI
-// ===============================
-function kirimAbsensi() {
-    const nama = document.getElementById("namaInput").value.trim().toLowerCase();
-    const statusAbsen = document.getElementById("statusAbsen");
-
-    if (!daftarValid.includes(nama)) {
-        statusAbsen.style.color = "red";
-        statusAbsen.innerText = "ID/Nama tidak terdaftar!";
+    if (!registeredUsers[id]) {
+        pesan.innerText = "ID tidak terdaftar!";
         return;
     }
 
     const now = new Date();
     const jam = now.getHours();
 
-    const status = jam <= batasJam ? "Hadir" : "Tanpa Keterangan";
+    let status = "Hadir";
 
-    let data = JSON.parse(localStorage.getItem("absensi")) || [];
+    if (jam > batasJam) {
+        status = "Tanpa Keterangan";
+    }
+
+    const data = JSON.parse(localStorage.getItem("absensi")) || [];
+
     data.push({
-        nama: nama,
+        id: id,
+        nama: registeredUsers[id],
         waktu: now.toLocaleString(),
         status: status
     });
 
     localStorage.setItem("absensi", JSON.stringify(data));
 
-    statusAbsen.style.color = "green";
-    statusAbsen.innerText = "Absensi Berhasil!";
-    document.getElementById("namaInput").value = "";
+    pesan.style.color = "green";
+    pesan.innerText = "Absensi berhasil!";
+    document.getElementById("userId").value = "";
 }
 
+// ====================== ADMIN LOGIN ======================
+function openAdmin() {
+    document.getElementById("absenPage").style.display = "none";
+    document.getElementById("adminLogin").style.display = "block";
+}
 
-// ===============================
-// ADMIN LOGIN
-// ===============================
+function backToHome() {
+    document.getElementById("adminLogin").style.display = "none";
+    document.getElementById("absenPage").style.display = "block";
+}
+
 function loginAdmin() {
     const pass = document.getElementById("adminPass").value;
-
     if (pass === "admin123") {
-        document.getElementById("adminLogin").classList.add("hidden");
-        document.getElementById("adminPanel").classList.remove("hidden");
+        document.getElementById("adminLogin").style.display = "none";
+        document.getElementById("adminPanel").style.display = "block";
         loadRekap();
     } else {
-        document.getElementById("loginStatus").innerText = "Password salah!";
+        document.getElementById("adminLoginMsg").innerText = "Password salah!";
     }
 }
 
+function logoutAdmin() {
+    document.getElementById("adminPanel").style.display = "none";
+    document.getElementById("absenPage").style.display = "block";
+}
 
-// ===============================
-// REKAP ADMIN
-// ===============================
+// ====================== REKAP ABSENSI ======================
 function loadRekap() {
-    const table = document.querySelector("#rekapTable tbody");
-    table.innerHTML = "";
-
     const data = JSON.parse(localStorage.getItem("absensi")) || [];
+    const body = document.getElementById("rekapBody");
+    body.innerHTML = "";
 
-    data.forEach(row => {
-        let tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${row.nama}</td>
-            <td>${row.waktu}</td>
-            <td>${row.status}</td>
+    data.forEach((item, index) => {
+        body.innerHTML += `
+            <tr>
+                <td>${item.id}</td>
+                <td>${item.nama}</td>
+                <td>${item.waktu}</td>
+                <td><button onclick="hapusData(${index})">Hapus</button></td>
+            </tr>
         `;
-        table.appendChild(tr);
     });
 }
 
-function hapusSemuaData() {
-    if (confirm("Yakin hapus semua data?")) {
-        localStorage.removeItem("absensi");
-        loadRekap();
-    }
+function hapusData(index) {
+    const data = JSON.parse(localStorage.getItem("absensi")) || [];
+    data.splice(index, 1);
+    localStorage.setItem("absensi", JSON.stringify(data));
+    loadRekap();
 }
 </script>
 
