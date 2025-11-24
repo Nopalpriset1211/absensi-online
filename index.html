@@ -3,221 +3,126 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Absensi Online</title>
-
+<title>Absensi Online - Firebase</title>
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        margin: 0; padding: 0;
-        background: #f4f6fa;
-    }
-    header {
-        background: #2d6cdf;
-        color: white;
-        padding: 15px;
-        text-align: center;
-        font-size: 22px;
-        font-weight: bold;
-    }
-    .container {
-        max-width: 420px;
-        margin: 30px auto;
-        background: white;
-        padding: 25px;
-        border-radius: 12px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-    input, button {
-        width: 100%;
-        padding: 12px;
-        margin: 8px 0;
-        border-radius: 6px;
-        border: 1px solid #ccc;
-        font-size: 16px;
-    }
-    button {
-        background: #2d6cdf;
-        color: white;
-        cursor: pointer;
-        font-weight: bold;
-    }
-    button:hover {
-        background: #1f54b8;
-    }
-    .link-btn {
-        background: #555;
-    }
-    .back-btn {
-        background: #777;
-        margin-top: 5px;
-    }
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 15px;
-    }
-    th, td {
-        padding: 8px;
-        border-bottom: 1px solid #ddd;
-        text-align: left;
-    }
+body { font-family: Arial; background: #f4f6fa; margin:0; padding:0; }
+header{background:#2d6cdf;color:white;padding:15px;text-align:center;font-size:22px;font-weight:bold;}
+.container{max-width:420px;margin:30px auto;background:white;padding:25px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.1);}
+input, button{width:100%;padding:12px;margin:8px 0;border-radius:6px;border:1px solid #ccc;font-size:16px;}
+button{background:#2d6cdf;color:white;cursor:pointer;font-weight:bold;}
+button:hover{background:#1f54b8;}
+.link-btn{background:#555;}
+.back-btn{background:#777;margin-top:5px;}
+table{width:100%;border-collapse:collapse;margin-top:15px;}
+th, td{padding:8px;border-bottom:1px solid #ddd;text-align:left;}
 </style>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 </head>
 <body>
 
 <header>Absensi Online</header>
 
-<!-- ====================== HALAMAN ABSEN ========================== -->
 <div class="container" id="absenPage">
-
-    <h3>Form Absensi</h3>
-
-    <label>ID Absen</label>
-    <input type="text" id="userId" placeholder="Masukkan ID Anda...">
-
-    <button onclick="submitAbsensi()">Apply Absen</button>
-
-    <button class="link-btn" onclick="openAdmin()">Login Admin</button>
-
-    <p style="color:red; font-weight:bold;" id="pesan"></p>
+<h3>Form Absensi</h3>
+<label>ID Absen</label>
+<input type="text" id="userId" placeholder="Masukkan ID Anda...">
+<button onclick="submitAbsensi()">Apply Absen</button>
+<button class="link-btn" onclick="openAdmin()">Login Admin</button>
+<p style="color:red;font-weight:bold;" id="pesan"></p>
 </div>
 
-<!-- ====================== LOGIN ADMIN ========================== -->
 <div class="container" id="adminLogin" style="display:none;">
-    <h3>Login Admin</h3>
-
-    <label>Password</label>
-    <input type="password" id="adminPass" placeholder="Masukkan password admin">
-
-    <button onclick="loginAdmin()">Login</button>
-    <button class="back-btn" onclick="backToHome()">Kembali</button>
-
-    <p id="adminLoginMsg" style="color:red;"></p>
+<h3>Login Admin</h3>
+<label>Password</label>
+<input type="password" id="adminPass" placeholder="Masukkan password admin">
+<button onclick="loginAdmin()">Login</button>
+<button class="back-btn" onclick="backToHome()">Kembali</button>
+<p id="adminLoginMsg" style="color:red;"></p>
 </div>
 
-<!-- ====================== MENU ADMIN ========================== -->
 <div class="container" id="adminPanel" style="display:none;">
-    <h3>Rekap Absensi</h3>
-
-    <table width="100%" id="rekapTable">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nama</th>
-                <th>Waktu</th>
-                <th>Status</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
-        <tbody id="rekapBody"></tbody>
-    </table>
-
-    <button class="back-btn" onclick="logoutAdmin()">Keluar Admin</button>
+<h3>Rekap Absensi</h3>
+<table width="100%" id="rekapTable">
+<thead>
+<tr><th>ID</th><th>Nama</th><th>Waktu</th><th>Status</th><th>Aksi</th></tr>
+</thead>
+<tbody id="rekapBody"></tbody>
+</table>
+<button class="back-btn" onclick="logoutAdmin()">Keluar Admin</button>
 </div>
 
 <script>
-// ====================== DATA USER TERDAFTAR ======================
-const registeredUsers = {
-    "101": "Andi Saputra",
-    "102": "Budi Pratama",
-    "103": "Citra Dewi",
-    "104": "Dina Permana"
+// ======= CONFIG FIREBASE =======
+const firebaseConfig = {
+  apiKey: "AIzaSyCCheqFeLe-BS5ZZiyXLfmRVnyoDbmbMiM",
+  authDomain: "absen-74c40.firebaseapp.com",
+  projectId: "absen-74c40",
+  storageBucket: "absen-74c40.firebasestorage.app",
+  messagingSenderId: "962064220204",
+  appId: "1:962064220204:web:8111b69ce31a5994f51189",
+  measurementId: "G-5YZD0L6FXQ"
 };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-// ====================== BATAS WAKTU ABSEN ======================
+// ======= DATA TERDAFTAR =======
+const registeredUsers = {
+    "101":"Andi Saputra",
+    "102":"Budi Pratama",
+    "103":"Citra Dewi",
+    "104":"Dina Permana"
+};
 const batasJam = 9;
 
-// ====================== ABSENSI ======================
-function submitAbsensi() {
+// ======= ABSENSI =======
+function submitAbsensi(){
     const id = document.getElementById("userId").value.trim();
     const pesan = document.getElementById("pesan");
-
-    if (!id) {
-        pesan.innerText = "ID tidak boleh kosong!";
-        return;
-    }
-
-    if (!registeredUsers[id]) {
-        pesan.innerText = "ID tidak terdaftar!";
-        return;
-    }
+    if(!id){pesan.innerText="ID tidak boleh kosong!"; return;}
+    if(!registeredUsers[id]){pesan.innerText="ID tidak terdaftar!"; return;}
 
     const now = new Date();
-    const jam = now.getHours();
+    let status = now.getHours()<=batasJam?"Hadir":"Tanpa Keterangan";
+    const data = {id:id,nama:registeredUsers[id],waktu:now.toLocaleString(),status:status};
 
-    let status = "Hadir";
-    if (jam > batasJam) {
-        status = "Tanpa Keterangan";
-    }
-
-    const data = JSON.parse(localStorage.getItem("absensi")) || [];
-
-    data.push({
-        id: id,
-        nama: registeredUsers[id],
-        waktu: now.toLocaleString(),
-        status: status
+    db.ref('absensi').push(data, (err)=>{
+        if(err){pesan.style.color="red";pesan.innerText="Gagal absen";}
+        else{pesan.style.color="green";pesan.innerText="Absensi berhasil!"; document.getElementById("userId").value="";}
     });
-
-    localStorage.setItem("absensi", JSON.stringify(data));
-
-    pesan.style.color = "green";
-    pesan.innerText = "Absensi berhasil!";
-    document.getElementById("userId").value = "";
 }
 
-// ====================== ADMIN LOGIN ======================
-function openAdmin() {
-    document.getElementById("absenPage").style.display = "none";
-    document.getElementById("adminLogin").style.display = "block";
-}
-
-function backToHome() {
-    document.getElementById("adminLogin").style.display = "none";
-    document.getElementById("absenPage").style.display = "block";
-}
-
-function loginAdmin() {
+// ======= ADMIN LOGIN =======
+function openAdmin(){document.getElementById("absenPage").style.display="none"; document.getElementById("adminLogin").style.display="block";}
+function backToHome(){document.getElementById("adminLogin").style.display="none"; document.getElementById("absenPage").style.display="block";}
+function loginAdmin(){
     const pass = document.getElementById("adminPass").value;
-    if (pass === "admin123") {
-        document.getElementById("adminLogin").style.display = "none";
-        document.getElementById("adminPanel").style.display = "block";
-        loadRekap();
-    } else {
-        document.getElementById("adminLoginMsg").innerText = "Password salah!";
-    }
+    if(pass==="admin123"){document.getElementById("adminLogin").style.display="none";document.getElementById("adminPanel").style.display="block";loadRekap();}
+    else document.getElementById("adminLoginMsg").innerText="Password salah!";
 }
+function logoutAdmin(){document.getElementById("adminPanel").style.display="none";document.getElementById("absenPage").style.display="block";}
 
-function logoutAdmin() {
-    document.getElementById("adminPanel").style.display = "none";
-    document.getElementById("absenPage").style.display = "block";
-}
-
-// ====================== REKAP ABSENSI ======================
-function loadRekap() {
-    const data = JSON.parse(localStorage.getItem("absensi")) || [];
+// ======= REKAP =======
+function loadRekap(){
     const body = document.getElementById("rekapBody");
-    body.innerHTML = "";
-
-    data.forEach((item, index) => {
-        body.innerHTML += `
-            <tr>
+    body.innerHTML="";
+    db.ref('absensi').once('value', snapshot=>{
+        snapshot.forEach(snap=>{
+            const item = snap.val();
+            const key = snap.key;
+            body.innerHTML += `<tr>
                 <td>${item.id}</td>
                 <td>${item.nama}</td>
                 <td>${item.waktu}</td>
                 <td>${item.status}</td>
-                <td><button onclick="hapusData(${index})">Hapus</button></td>
-            </tr>
-        `;
+                <td><button onclick="hapusData('${key}')">Hapus</button></td>
+            </tr>`;
+        });
     });
 }
 
-function hapusData(index) {
-    const data = JSON.parse(localStorage.getItem("absensi")) || [];
-    data.splice(index, 1);
-    localStorage.setItem("absensi", JSON.stringify(data));
-    loadRekap();
-}
+function hapusData(key){db.ref('absensi/'+key).remove().then(()=>loadRekap());}
 </script>
 
 </body>
