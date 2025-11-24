@@ -84,12 +84,12 @@ function submitAbsensi(){
     if(!registeredUsers[id]){pesan.innerText="ID tidak terdaftar!"; return;}
 
     const now = new Date();
-    let status = now.getHours()<=batasJam?"Hadir":"Tanpa Keterangan";
-    const data = {id:id,nama:registeredUsers[id],waktu:now.toLocaleString(),status:status};
+    let status = now.getHours() <= batasJam ? "Hadir" : "Tanpa Keterangan";
+    const data = {id:id, nama:registeredUsers[id], waktu:now.toLocaleString(), status:status};
 
     db.ref('absensi').push(data, (err)=>{
-        if(err){pesan.style.color="red";pesan.innerText="Gagal absen";}
-        else{pesan.style.color="green";pesan.innerText="Absensi berhasil!"; document.getElementById("userId").value="";}
+        if(err){pesan.style.color="red"; pesan.innerText="Gagal absen";}
+        else{pesan.style.color="green"; pesan.innerText="Absensi berhasil!"; document.getElementById("userId").value="";}
     });
 }
 
