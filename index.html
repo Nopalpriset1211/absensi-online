@@ -7,23 +7,27 @@
 <style>
 body { font-family: Arial; background: #f4f6fa; margin:0; padding:0; }
 header{background:#2d6cdf;color:white;padding:15px;text-align:center;font-size:22px;font-weight:bold;}
-.container{max-width:420px;margin:30px auto;background:white;padding:25px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.1);}
-input, button{width:100%;padding:12px;margin:8px 0;border-radius:6px;border:1px solid #ccc;font-size:16px;}
+.container{max-width:480px;margin:30px auto;background:white;padding:25px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.1);}
+input, button, select{width:100%;padding:12px;margin:8px 0;border-radius:6px;border:1px solid #ccc;font-size:16px;}
 button{background:#2d6cdf;color:white;cursor:pointer;font-weight:bold;}
 button:hover{background:#1f54b8;}
 .link-btn{background:#555;}
 .back-btn{background:#777;margin-top:5px;}
 table{width:100%;border-collapse:collapse;margin-top:15px;}
 th, td{padding:8px;border-bottom:1px solid #ddd;text-align:left;}
+a{color:#2d6cdf;text-decoration:none;}
+a:hover{text-decoration:underline;}
 </style>
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
 </head>
 <body>
 
-<header>Absensi Rutinan Paskibra</header>
+<header>Absensi Online</header>
 
+<!-- Halaman Absen -->
 <div class="container" id="absenPage">
 <h3>Form Absensi</h3>
 <p style="color:#555;font-size:14px;">
@@ -31,11 +35,24 @@ th, td{padding:8px;border-bottom:1px solid #ddd;text-align:left;}
 </p>
 <label>ID Absen</label>
 <input type="text" id="userId" placeholder="Masukkan ID Anda...">
+
+<label>Status</label>
+<select id="statusAbsen" onchange="toggleFileInput()">
+  <option value="Hadir">Hadir</option>
+  <option value="Izin">Izin</option>
+</select>
+
+<div id="fileWrapper" style="display:none;">
+  <label>Upload Foto Izin</label>
+  <input type="file" id="fotoIzin" accept="image/*">
+</div>
+
 <button onclick="submitAbsensi()">Apply Absen</button>
 <button class="link-btn" onclick="openAdmin()">Login Admin</button>
 <p style="color:red;font-weight:bold;" id="pesan"></p>
 </div>
 
+<!-- Halaman Login Admin -->
 <div class="container" id="adminLogin" style="display:none;">
 <h3>Login Admin</h3>
 <label>Password</label>
@@ -45,11 +62,12 @@ th, td{padding:8px;border-bottom:1px solid #ddd;text-align:left;}
 <p id="adminLoginMsg" style="color:red;"></p>
 </div>
 
+<!-- Halaman Admin Panel -->
 <div class="container" id="adminPanel" style="display:none;">
 <h3>Rekap Absensi</h3>
 <table width="100%" id="rekapTable">
 <thead>
-<tr><th>ID</th><th>Nama</th><th>Waktu</th><th>Status</th><th>Aksi</th></tr>
+<tr><th>ID</th><th>Nama</th><th>Waktu</th><th>Status</th><th>Bukti</th><th>Aksi</th></tr>
 </thead>
 <tbody id="rekapBody"></tbody>
 </table>
@@ -70,6 +88,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+const storage = firebase.storage();
 
 // ======= DATA TERDAFTAR =======
 const registeredUsers = {
@@ -78,49 +97,60 @@ const registeredUsers = {
     "103":"Citra Dewi",
     "104":"Dina Permana"
 };
-const batasJam = 18; // jam akhir Hadir, bisa diatur sesuai kebutuhan
+const batasJam = 18; // jam akhir Hadir
+
+// ======= Toggle input file untuk Izin =======
+function toggleFileInput(){
+    const status = document.getElementById("statusAbsen").value;
+    document.getElementById("fileWrapper").style.display = (status==="Izin") ? "block" : "none";
+}
 
 // ======= ABSENSI =======
 function submitAbsensi(){
     const id = document.getElementById("userId").value.trim();
     const pesan = document.getElementById("pesan");
+    const status = document.getElementById("statusAbsen").value;
+    const fileInput = document.getElementById("fotoIzin");
 
     if(!id){pesan.style.color="red"; pesan.innerText="ID tidak boleh kosong!"; return;}
     if(!registeredUsers[id]){pesan.style.color="red"; pesan.innerText="ID tidak terdaftar!"; return;}
 
     const now = new Date();
-    const hari = now.getDay(); // 0=Minggu, 1=Senin, 2=Selasa, ..., 6=Sabtu
+    const hari = now.getDay();
     const jam = now.getHours();
 
-    // Validasi hari Selasa (2) & Sabtu (6)
-    if(!(hari === 2 || hari === 6)){
-        pesan.style.color="red";
-        pesan.innerText="Absensi hanya bisa dilakukan hari Selasa & Sabtu!";
-        return;
+    if(!(hari===2 || hari===6)){
+        pesan.style.color="red"; pesan.innerText="Absensi hanya bisa dilakukan hari Selasa & Sabtu!"; return;
+    }
+    if(jam<12 || jam>18){
+        pesan.style.color="red"; pesan.innerText="Absensi hanya bisa dilakukan pukul 12:00 - 18:00 WIB!"; return;
     }
 
-    // Validasi jam 12 - 18
-    if(jam < 12 || jam > 18){
-        pesan.style.color="red";
-        pesan.innerText="Absensi hanya bisa dilakukan pukul 12:00 - 18:00 WIB!";
-        return;
+    if(status==="Izin" && fileInput.files.length===0){
+        pesan.style.color="red"; pesan.innerText="Wajib melampirkan foto untuk status Izin!"; return;
     }
 
-    let status = jam <= batasJam ? "Hadir" : "Tanpa Keterangan";
-    const data = {id:id, nama:registeredUsers[id], waktu:now.toLocaleString(), status:status};
+    let statusFinal = (status==="Hadir") ? (jam<=batasJam ? "Hadir":"Tanpa Keterangan") : "Izin";
 
-    db.ref('absensi').push(data, (err)=>{
-        if(err){
-            console.log("Gagal kirim:", err);
-            pesan.style.color="red";
-            pesan.innerText="Gagal absen";
-        } else {
-            console.log("Berhasil kirim:", data);
-            pesan.style.color="green";
-            pesan.innerText="Absensi berhasil!";
-            document.getElementById("userId").value="";
-        }
-    });
+    if(status==="Izin"){
+        const file = fileInput.files[0];
+        const storageRef = storage.ref("izin/"+id+"_"+Date.now());
+        storageRef.put(file).then(snapshot=>{
+            snapshot.ref.getDownloadURL().then(url=>{
+                const data = {id:id, nama:registeredUsers[id], waktu:now.toLocaleString(), status:statusFinal, fotoIzin:url};
+                db.ref('absensi').push(data, err=>{
+                    if(err){pesan.style.color="red"; pesan.innerText="Gagal absen";}
+                    else{pesan.style.color="green"; pesan.innerText="Absensi berhasil!"; document.getElementById("userId").value=""; fileInput.value="";}
+                });
+            });
+        });
+    } else {
+        const data = {id:id, nama:registeredUsers[id], waktu:now.toLocaleString(), status:statusFinal};
+        db.ref('absensi').push(data, err=>{
+            if(err){pesan.style.color="red"; pesan.innerText="Gagal absen";}
+            else{pesan.style.color="green"; pesan.innerText="Absensi berhasil!"; document.getElementById("userId").value="";}
+        });
+    }
 }
 
 // ======= ADMIN LOGIN =======
@@ -128,10 +158,10 @@ function openAdmin(){document.getElementById("absenPage").style.display="none"; 
 function backToHome(){document.getElementById("adminLogin").style.display="none"; document.getElementById("absenPage").style.display="block";}
 function loginAdmin(){
     const pass = document.getElementById("adminPass").value;
-    if(pass==="admin123"){document.getElementById("adminLogin").style.display="none";document.getElementById("adminPanel").style.display="block";loadRekap();}
+    if(pass==="fourl"){document.getElementById("adminLogin").style.display="none";document.getElementById("adminPanel").style.display="block"; loadRekap();}
     else document.getElementById("adminLoginMsg").innerText="Password salah!";
 }
-function logoutAdmin(){document.getElementById("adminPanel").style.display="none";document.getElementById("absenPage").style.display="block";}
+function logoutAdmin(){document.getElementById("adminPanel").style.display="none"; document.getElementById("absenPage").style.display="block";}
 
 // ======= REKAP =======
 function loadRekap(){
@@ -141,20 +171,40 @@ function loadRekap(){
         snapshot.forEach(snap=>{
             const item = snap.val();
             const key = snap.key;
+            const fotoLink = item.fotoIzin ? `<a href="${item.fotoIzin}" target="_blank">Lihat</a>` : "-";
             body.innerHTML += `<tr>
                 <td>${item.id}</td>
                 <td>${item.nama}</td>
                 <td>${item.waktu}</td>
                 <td>${item.status}</td>
+                <td>${fotoLink}</td>
                 <td><button onclick="hapusData('${key}')">Hapus</button></td>
             </tr>`;
         });
     });
 }
-
 function hapusData(key){db.ref('absensi/'+key).remove().then(()=>loadRekap());}
+
+// ======= AUTO TANPA KETERANGAN =======
+function autoAbsenTanpaKeterangan(){
+    const now = new Date();
+    const hari = now.getDay();
+    const jam = now.getHours();
+    if((hari===2 || hari===6) && jam===18){
+        db.ref('absensi').once('value', snapshot=>{
+            const sudahAbsen = {};
+            snapshot.forEach(snap=>{sudahAbsen[snap.val().id] = true;});
+            for(const id in registeredUsers){
+                if(!sudahAbsen[id]){
+                    const data = {id:id, nama:registeredUsers[id], waktu:now.toLocaleString(), status:"Tanpa Keterangan"};
+                    db.ref('absensi').push(data);
+                }
+            }
+        });
+    }
+}
+setInterval(autoAbsenTanpaKeterangan, 5*60*1000); // Cek tiap 5 menit
 </script>
 
 </body>
 </html>
-
