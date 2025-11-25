@@ -58,7 +58,6 @@ a:hover{text-decoration:underline;}
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
 </head>
 <body>
 
@@ -149,7 +148,6 @@ function submitAbsensi(){
     const id = document.getElementById("userId").value.trim();
     const pesan = document.getElementById("pesan");
     const status = document.getElementById("statusAbsen").value;
-    const alasanInput = document.getElementById("alasanIzin");
 
     if(!id){pesan.style.color="red"; pesan.innerText="ID tidak boleh kosong!"; return;}
     if(!registeredUsers[id]){pesan.style.color="red"; pesan.innerText="ID tidak terdaftar!"; return;}
@@ -168,15 +166,19 @@ function submitAbsensi(){
     let statusFinal = (status==="Hadir") ? (jam<=batasJam ? "Hadir":"Tanpa Keterangan") : "Izin";
 
     if(status==="Izin"){
-        const alasan = alasanInput.value.trim();
-        if(!alasan){pesan.style.color="red"; pesan.innerText="Wajib menuliskan alasan izin!"; return;}
+        const alasan = document.getElementById("alasanIzin").value.trim();
+        if(!alasan){ 
+            pesan.style.color="red"; 
+            pesan.innerText="Wajib menuliskan alasan izin!"; 
+            return; 
+        }
         const data = {id:id, nama:registeredUsers[id], waktu:now.toLocaleString(), status:statusFinal, alasan:alasan};
         db.ref('absensi').push(data, err=>{
             if(err){pesan.style.color="red"; pesan.innerText="Gagal absen";}
             else{
                 pesan.style.color="green"; pesan.innerText="Absensi berhasil!";
                 document.getElementById("userId").value="";
-                alasanInput.value="";
+                document.getElementById("alasanIzin").value="";
             }
         });
     } else {
